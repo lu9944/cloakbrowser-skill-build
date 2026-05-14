@@ -1,4 +1,4 @@
-#!/root/.local/share/uv/tools/cloakbrowser/bin/python
+#!/usr/local/bin/cloakbrowser-python
 """Save a URL as PDF with stealth Chromium (Chromium-only, headless).
 
 Usage:

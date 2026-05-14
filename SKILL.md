@@ -16,9 +16,13 @@ breaks on the next Chrome upgrade.
 
 Already installed:
 
-- `cloakbrowser` CLI lives at `~/.local/bin/cloakbrowser` (uv tool venv).
-- Stealth Chromium binary at `~/.cloakbrowser/chromium-<version>/chrome`.
-- Wrapper Python at `~/.local/share/uv/tools/cloakbrowser/bin/python`.
+- `cloakbrowser` CLI lives at `/home/node/.local/bin/cloakbrowser` in the
+  stable OpenClaw container image.
+- Stealth Chromium binary lives at
+  `/home/node/.cloakbrowser/chromium-<version>/chrome`.
+- Wrapper Python is exposed through `/usr/local/bin/cloakbrowser-python`; the
+  bundled scripts use this stable wrapper so they work even when Codex sets
+  `HOME` to an isolated session directory.
 
 If a fresh checkout or a new machine needs setting up:
 
@@ -84,7 +88,7 @@ For multi-step flows (login, fill a form, click through, conditional waits),
 write a one-off script. Use the uv tool venv's interpreter:
 
 ```bash
-CB_PY=/root/.local/share/uv/tools/cloakbrowser/bin/python
+CB_PY=/usr/local/bin/cloakbrowser-python
 
 "$CB_PY" - <<'PY'
 from cloakbrowser import launch
@@ -139,8 +143,8 @@ script examples above are enough — don't load the reference.
 
 - `Binary not found` / first-run hang → `cloakbrowser install`.
 - `ModuleNotFoundError: cloakbrowser` → you're on the wrong Python. Use
-  `/root/.local/share/uv/tools/cloakbrowser/bin/python` or the bundled
-  scripts (their shebang already points there).
+  `/usr/local/bin/cloakbrowser-python` or the bundled scripts (their shebang
+  already points there).
 - Slow startup → the binary checks for updates on launch. Pass
   `auto_update=False` to `launch()` (or set `CLOAKBROWSER_AUTO_UPDATE=0`) to
   skip.

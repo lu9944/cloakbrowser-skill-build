@@ -1,4 +1,4 @@
-#!/root/.local/share/uv/tools/cloakbrowser/bin/python
+#!/usr/local/bin/cloakbrowser-python
 """Screenshot a URL with stealth Chromium.
 
 Usage:

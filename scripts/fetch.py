@@ -1,4 +1,4 @@
-#!/root/.local/share/uv/tools/cloakbrowser/bin/python
+#!/usr/local/bin/cloakbrowser-python
 """Fetch a URL with stealth Chromium and print HTML or extracted text.
 
 Usage:

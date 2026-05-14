@@ -1,4 +1,4 @@
-#!/root/.local/share/uv/tools/cloakbrowser/bin/python
+#!/usr/local/bin/cloakbrowser-python
 """Self-check: confirm the stealth Chromium fingerprint looks like real Chrome.
 
 Prints a small JSON report. Exit 0 if all four core stealth tells pass:

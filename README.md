@@ -5,22 +5,54 @@ A [Claude](https://claude.com/claude-code) skill that wraps
 passes most bot-detection layers (Cloudflare Turnstile, reCAPTCHA v3,
 FingerprintJS, ShieldSquare, BrowserScan, generic 403/429 walls).
 
-Drop it into your Claude skills folder and your agent can fetch, screenshot,
-PDF, or run JavaScript against sites that block normal headless browsers — no
-hand-rolled Playwright code per task.
+Drop it into your Claude agent and it can fetch, screenshot, PDF, or run
+JavaScript against sites that block normal headless browsers — no hand-rolled
+Playwright code per task.
+
+## Install — one command
+
+Uses the [vercel-labs/skills](https://github.com/vercel-labs/skills) installer.
+It auto-detects every Claude agent / coding harness you have installed and
+copies the skill into each one's skills folder:
+
+```bash
+npx skills add OctavianTocan/cloakbrowser-skill
+```
+
+Then run the post-install setup once per host (installs CloakBrowser itself,
+downloads the patched Chromium, and pins a stable Python wrapper at
+`/usr/local/bin/cloakbrowser-python`):
+
+```bash
+~/.claude/skills/cloakbrowser/install.sh   # or wherever the installer dropped it
+```
+
+That's it. The skill is now usable by any agent on this machine.
+
+### Manual install (no `skills` CLI)
+
+```bash
+git clone https://github.com/OctavianTocan/cloakbrowser-skill.git \
+  ~/.claude/skills/cloakbrowser
+~/.claude/skills/cloakbrowser/install.sh
+```
+
+The installer is idempotent — re-run it on every new host or after upgrading
+CloakBrowser.
 
 ## What's in here
 
 ```
-cloakbrowser/
+cloakbrowser-skill/
 ├── SKILL.md                              # frontmatter + agent instructions
+├── install.sh                            # post-add one-time setup
 ├── scripts/
-│   ├── fetch.py                          # HTML or visible text, optional CSS selector
+│   ├── fetch.py                          # HTML / visible text, optional CSS selector
 │   ├── screenshot.py                     # PNG (full page, element, or custom viewport)
 │   ├── pdf.py                            # render page → PDF
 │   ├── eval-js.py                        # run a JS expression, get JSON
 │   ├── check-stealth.py                  # confirm stealth fingerprint passes 4 core tells
-│   ├── serve.py + serve.sh               # long-lived CDP endpoint for shared sessions
+│   └── serve.py + serve.sh               # long-lived CDP endpoint for shared sessions
 └── references/
     └── stealth-knobs.md                  # when to use humanize / proxies / geoip / profiles
 ```
@@ -28,50 +60,7 @@ cloakbrowser/
 The agent reads `SKILL.md`, picks the right script for the task, shells out.
 No heredoc Python per call.
 
-## Install
-
-### One-time prereqs
-
-CloakBrowser ships its stealth Chromium binary out-of-band, so you install it
-once on the host:
-
-```bash
-uv tool install cloakbrowser     # or `pipx install cloakbrowser` on a non-PEP-668 system
-cloakbrowser install             # downloads the ~206 MB patched Chromium
-```
-
-This gives you:
-
-- `cloakbrowser` CLI at `~/.local/bin/cloakbrowser`
-- wrapper Python at `~/.local/share/uv/tools/cloakbrowser/bin/python`
-- stealth Chromium at `~/.cloakbrowser/chromium-<version>/chrome`
-
-### Drop the skill into Claude
-
-Clone (or copy) this repo into the skill folder Claude reads. For Claude Code:
-
-```bash
-git clone https://github.com/OctavianTocan/cloakbrowser-skill.git \
-  ~/.claude/skills/cloakbrowser
-```
-
-For other Claude harnesses, drop the `cloakbrowser/` directory wherever your
-harness loads skills from.
-
-### Heads up on the shebang
-
-Every script in `scripts/` has an absolute shebang pointing at
-`/root/.local/share/uv/tools/cloakbrowser/bin/python` (the path `uv tool
-install` produced on the system this skill was authored on). If your install
-path differs, either:
-
-- run `sed -i "s|/root/.local/share/uv/tools/cloakbrowser/bin/python|$(uv tool dir)/cloakbrowser/bin/python|" scripts/*.py`, or
-- invoke the scripts via the venv explicitly:
-  `"$(uv tool dir)/cloakbrowser/bin/python" scripts/fetch.py URL`.
-
 ## Usage at a glance
-
-Once installed, the agent uses the scripts directly:
 
 ```bash
 SK=~/.claude/skills/cloakbrowser/scripts
@@ -93,7 +82,7 @@ For multi-step interactive flows (login, click, conditional waits) the agent
 writes inline Python against the Playwright-shaped API — see "Inline Python"
 in `SKILL.md`.
 
-## Why a skill rather than just `pip install cloakbrowser`?
+## Why a skill rather than just `uv tool install cloakbrowser`?
 
 CloakBrowser is a library, not a CLI. Without this skill, every agent run
 reinvents the same Playwright boilerplate as a heredoc. The skill gives the
@@ -132,5 +121,5 @@ on the binary and source patches.
 
 ## Acknowledgements
 
-Built on [CloakHQ/CloakBrowser](https://github.com/CloakHQ/CloakBrowser). This
-skill is just an agent-ergonomics wrapper around it.
+Built on [CloakHQ/CloakBrowser](https://github.com/CloakHQ/CloakBrowser).
+Installable via [vercel-labs/skills](https://github.com/vercel-labs/skills).

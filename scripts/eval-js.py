@@ -1,4 +1,4 @@
-#!/root/.local/share/uv/tools/cloakbrowser/bin/python
+#!/usr/local/bin/cloakbrowser-python
 """Open a URL in stealth Chromium and evaluate a JS expression. Prints JSON.
 
 Usage:
