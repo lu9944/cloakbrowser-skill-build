@@ -22,9 +22,6 @@ required.
 
 ## Decision tree — pick the right tool
 
-> **All script paths are relative to this skill directory.** Set `SK` to its
-> `scripts/` subdirectory.
-
 | Task                                                          | Use                            |
 |---------------------------------------------------------------|--------------------------------|
 | Get the HTML or visible text of a page                        | `scripts/fetch.py`             |
@@ -41,30 +38,34 @@ Always reach for a bundled script first. They use `argparse`, take `--humanize`,
 ## Bundled scripts
 
 All scripts use `#!/usr/bin/env python3` and import `_runtime` to bootstrap the
-bundled packages and Chromium path. Run them directly:
+bundled packages and Chromium path. The skill directory path is shown at the top
+of this message (the directory containing this SKILL.md).
+
+**Always use the full absolute path when invoking scripts.** For example, if the
+skill directory is `/home/ubuntu/.qwenpaw/workspaces/default/skills/cloakbrowser`,
+then scripts are at `/home/ubuntu/.qwenpaw/workspaces/default/skills/cloakbrowser/scripts/`.
 
 ```bash
-SK=<skill_dir>/scripts
+# Replace SKILL_DIR with the actual skill directory path shown above
+SKILL_DIR/scripts/fetch.py https://example.com                       # full HTML on stdout
+SKILL_DIR/scripts/fetch.py https://example.com --text                # visible text only
+SKILL_DIR/scripts/fetch.py https://example.com --selector "h1"       # scoped to a selector
+SKILL_DIR/scripts/fetch.py https://protected.example --humanize      # behavioural stealth
+SKILL_DIR/scripts/fetch.py https://geo.example --proxy socks5://u:p@host:1080 --geoip
 
-$SK/fetch.py https://example.com                       # full HTML on stdout
-$SK/fetch.py https://example.com --text                # visible text only
-$SK/fetch.py https://example.com --selector "h1"       # scoped to a selector
-$SK/fetch.py https://protected.example --humanize      # behavioural stealth
-$SK/fetch.py https://geo.example --proxy socks5://u:p@host:1080 --geoip
+SKILL_DIR/scripts/screenshot.py https://example.com /tmp/out.png --full
+SKILL_DIR/scripts/screenshot.py https://example.com /tmp/hero.png --selector ".hero"
+SKILL_DIR/scripts/screenshot.py https://example.com /tmp/m.png --viewport 390x844
 
-$SK/screenshot.py https://example.com /tmp/out.png --full
-$SK/screenshot.py https://example.com /tmp/hero.png --selector ".hero"
-$SK/screenshot.py https://example.com /tmp/m.png --viewport 390x844
+SKILL_DIR/scripts/pdf.py https://example.com /tmp/page.pdf --format A4
+SKILL_DIR/scripts/pdf.py https://example.com /tmp/wide.pdf --landscape
 
-$SK/pdf.py https://example.com /tmp/page.pdf --format A4
-$SK/pdf.py https://example.com /tmp/wide.pdf --landscape
+SKILL_DIR/scripts/eval-js.py https://news.example "Array.from(document.querySelectorAll('h2')).map(h=>h.innerText)"
+SKILL_DIR/scripts/eval-js.py https://example.com  "({ua: navigator.userAgent, w: innerWidth})"
 
-$SK/eval-js.py https://news.example "Array.from(document.querySelectorAll('h2')).map(h=>h.innerText)"
-$SK/eval-js.py https://example.com  "({ua: navigator.userAgent, w: innerWidth})"
+SKILL_DIR/scripts/check-stealth.py        # JSON report + exit 0 if all 4 stealth tells pass
 
-$SK/check-stealth.py        # JSON report + exit 0 if all 4 stealth tells pass
-
-$SK/serve.sh --port 9222    # starts cloakserve in background; logs /tmp/cloakserve.log
+SKILL_DIR/scripts/serve.sh --port 9222    # starts cloakserve in background; logs /tmp/cloakserve.log
 ```
 
 The pattern is consistent: positional `URL` (and `OUTPUT` where relevant), then
@@ -78,8 +79,8 @@ write a one-off script. Use the same `_runtime` bootstrap:
 ```bash
 python3 -c "
 import sys, os
-sys.path.insert(0, '<skill_dir>/.runtime/lib')
-os.environ['CLOAKBROWSER_CACHE_DIR'] = '<skill_dir>/.chromium'
+sys.path.insert(0, 'SKILL_DIR/.runtime/lib')
+os.environ['CLOAKBROWSER_BINARY_PATH'] = 'SKILL_DIR/.chromium/chromium-VERSION/chrome'
 os.environ['CLOAKBROWSER_AUTO_UPDATE'] = '0'
 from cloakbrowser import launch
 b = launch(headless=True, humanize=True)
