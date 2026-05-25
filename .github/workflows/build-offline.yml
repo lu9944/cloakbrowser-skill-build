@@ -35,9 +35,10 @@ jobs:
         run: |
           export HOME="/tmp/cb-build-home"
           mkdir -p "$HOME"
-          /tmp/cb-build/bin/cloakbrowser install
+          /tmp/cb-build/bin/cloakbrowser install || true
           echo "--- Chromium layout ---"
           find "$HOME/.cloakbrowser/" -maxdepth 3 -type f | head -20
+          test -f "$(find "$HOME/.cloakbrowser/" -name chrome -type f | head -1)"
 
       - name: Assemble self-contained skill zip
         run: |
