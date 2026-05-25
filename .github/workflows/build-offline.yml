@@ -1,0 +1,81 @@
+name: Build Offline Skill Package
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            python3 python3-venv python3-pip \
+            libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 \
+            libcups2 libdrm2 libxkbcommon0 libxcomposite1 \
+            libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 \
+            libcairo2 libasound2 libxshmfence1
+
+      - name: Install cloakbrowser into build venv
+        run: |
+          python3 -m venv /tmp/cb-build
+          /tmp/cb-build/bin/pip install --upgrade pip
+          /tmp/cb-build/bin/pip install cloakbrowser
+
+      - name: Download stealth Chromium
+        run: |
+          export HOME="/tmp/cb-build-home"
+          mkdir -p "$HOME"
+          /tmp/cb-build/bin/cloakbrowser install
+          echo "--- Chromium layout ---"
+          find "$HOME/.cloakbrowser/" -maxdepth 3 -type f | head -20
+
+      - name: Assemble self-contained skill zip
+        run: |
+          set -ex
+          STAGING="/tmp/cb-skill-staging/cloakbrowser"
+          rm -rf "$STAGING"
+          mkdir -p "$STAGING"
+
+          # --- skill files ---
+          cp SKILL.md "$STAGING/"
+          cp -r scripts "$STAGING/"
+          cp -r references "$STAGING/"
+          chmod +x "$STAGING/scripts/"*.py "$STAGING/scripts/"*.sh
+
+          # --- runtime: Python packages ---
+          mkdir -p "$STAGING/.runtime/lib"
+          /tmp/cb-build/bin/pip install --target "$STAGING/.runtime/lib" cloakbrowser
+
+          # --- runtime: Chromium binary ---
+          cp -a /tmp/cb-build-home/.cloakbrowser "$STAGING/.chromium"
+
+          # --- build zip ---
+          cd /tmp/cb-skill-staging
+          zip -r "$GITHUB_WORKSPACE/cloakbrowser-skill.zip" cloakbrowser/
+
+          echo "=== Zip contents ==="
+          du -sh "$GITHUB_WORKSPACE/cloakbrowser-skill.zip"
+          unzip -l "$GITHUB_WORKSPACE/cloakbrowser-skill.zip" | tail -5
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloakbrowser-skill
+          path: cloakbrowser-skill.zip
+          retention-days: 90
+
+      - name: Create release (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: cloakbrowser-skill.zip

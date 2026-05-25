@@ -40,7 +40,59 @@ git clone https://github.com/OctavianTocan/cloakbrowser-skill.git \
 The installer is idempotent — re-run it on every new host or after upgrading
 CloakBrowser.
 
-## What's in here
+## Offline install for QwenPaw (no internet on target machine)
+
+GitHub Actions builds a **single self-contained zip** that includes the
+Chromium binary and Python runtime. Import it into QwenPaw and it works
+immediately — no sudo, no separate runtime install.
+
+### Step 1 — Build (on any machine with internet)
+
+Push a tag or manually trigger the workflow:
+
+```
+gh workflow run build-offline.yml
+```
+
+Download `cloakbrowser-skill.zip` from the **Actions** tab.
+
+### Step 2 — Import into QwenPaw
+
+Use QwenPaw's **skill zip upload** (web UI or API):
+
+```
+POST /skills/upload  with  cloakbrowser-skill.zip
+```
+
+That's it. The skill is now available. Enable it for your agent.
+
+### How it works
+
+The zip bundles everything into the skill directory:
+
+```
+cloakbrowser/
+├── SKILL.md
+├── scripts/
+│   ├── _runtime.py          # bootstrap: sets sys.path + CLOAKBROWSER_CACHE_DIR
+│   ├── fetch.py
+│   └── ...
+├── references/
+├── .runtime/
+│   └── lib/                 # Python packages (cloakbrowser + deps)
+└── .chromium/               # Stealth Chromium binary (~200 MB)
+    └── chromium-<version>/
+        └── chrome
+```
+
+Each script imports `_runtime` as its first action, which:
+1. Adds `.runtime/lib` to `sys.path` (so `import cloakbrowser` works)
+2. Sets `CLOAKBROWSER_CACHE_DIR` to `.chromium/` inside the skill directory
+3. Sets `CLOAKBROWSER_AUTO_UPDATE=0` (no internet needed)
+
+No system-level setup required. Works on any x86_64 Linux host.
+
+### What's in here
 
 ```
 cloakbrowser-skill/

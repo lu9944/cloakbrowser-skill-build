@@ -1,4 +1,5 @@
-#!/usr/local/bin/cloakbrowser-python
+#!/usr/bin/env python3
+import _runtime  # noqa: F401 — bootstrap sys.path + env vars
 """Screenshot a URL with stealth Chromium.
 
 Usage:

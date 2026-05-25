@@ -12,30 +12,18 @@ input, `navigator.webdriver`, plugin list, `window.chrome`, …) so detection
 services see a real browser because it **is** a real browser — no JS shim that
 breaks on the next Chrome upgrade.
 
-## Install state on this VPS
+## Self-contained — no external setup needed
 
-Already installed:
-
-- `cloakbrowser` CLI lives at `/home/node/.local/bin/cloakbrowser` in the
-  stable OpenClaw container image.
-- Stealth Chromium binary lives at
-  `/home/node/.cloakbrowser/chromium-<version>/chrome`.
-- Wrapper Python is exposed through `/usr/local/bin/cloakbrowser-python`; the
-  bundled scripts use this stable wrapper so they work even when Codex sets
-  `HOME` to an isolated session directory.
-
-If a fresh checkout or a new machine needs setting up:
-
-```bash
-uv tool install cloakbrowser
-cloakbrowser install        # downloads the ~206 MB Chromium binary
-```
-
-The `cloakbrowser` CLI only manages the binary (`install`, `info`, `update`,
-`clear-cache`). It is **not** a scraper — for that, use the scripts in this
-skill or write inline Python.
+The Chromium binary and Python runtime are bundled inside this skill directory
+under `.chromium/` and `.runtime/`. Scripts automatically discover them via
+`scripts/_runtime.py`, which sets `CLOAKBROWSER_CACHE_DIR` and adds the bundled
+packages to `sys.path`. No `/usr/local/bin` wrapper or separate install step is
+required.
 
 ## Decision tree — pick the right tool
+
+> **All script paths are relative to this skill directory.** Set `SK` to its
+> `scripts/` subdirectory.
 
 | Task                                                          | Use                            |
 |---------------------------------------------------------------|--------------------------------|
@@ -52,11 +40,11 @@ Always reach for a bundled script first. They use `argparse`, take `--humanize`,
 
 ## Bundled scripts
 
-All scripts are executable (`#!` already points at the right Python). Invoke
-them by absolute path:
+All scripts use `#!/usr/bin/env python3` and import `_runtime` to bootstrap the
+bundled packages and Chromium path. Run them directly:
 
 ```bash
-SK=/root/.openclaw/skills/cloakbrowser/scripts
+SK=<skill_dir>/scripts
 
 $SK/fetch.py https://example.com                       # full HTML on stdout
 $SK/fetch.py https://example.com --text                # visible text only
@@ -85,23 +73,25 @@ optional flags `--humanize`, `--proxy`, `--geoip`, `--wait`, `--timeout`.
 ## Inline Python — for everything the scripts don't cover
 
 For multi-step flows (login, fill a form, click through, conditional waits),
-write a one-off script. Use the uv tool venv's interpreter:
+write a one-off script. Use the same `_runtime` bootstrap:
 
 ```bash
-CB_PY=/usr/local/bin/cloakbrowser-python
-
-"$CB_PY" - <<'PY'
+python3 -c "
+import sys, os
+sys.path.insert(0, '<skill_dir>/.runtime/lib')
+os.environ['CLOAKBROWSER_CACHE_DIR'] = '<skill_dir>/.chromium'
+os.environ['CLOAKBROWSER_AUTO_UPDATE'] = '0'
 from cloakbrowser import launch
 b = launch(headless=True, humanize=True)
 p = b.new_page()
-p.goto("https://example.com/login", wait_until="domcontentloaded")
-p.fill("#email", "me@example.com")
-p.fill("#password", "…")
-p.click("button[type=submit]")
-p.wait_for_url("**/dashboard**")
+p.goto('https://example.com/login', wait_until='domcontentloaded')
+p.fill('#email', 'me@example.com')
+p.fill('#password', '…')
+p.click('button[type=submit]')
+p.wait_for_url('**/dashboard**')
 print(p.title())
 b.close()
-PY
+"
 ```
 
 The API is identical to Playwright's sync API — anything in the Playwright
@@ -128,12 +118,8 @@ script examples above are enough — don't load the reference.
 
 ## Anti-patterns
 
-- Don't `pip install cloakbrowser` system-wide. PEP 668 blocks it on this VPS.
-  Use `uv tool install cloakbrowser` (already done).
 - Don't run `playwright install` — CloakBrowser ships its own Chromium and
   doesn't use Playwright's bundled binaries.
-- Don't import `cloakbrowser` from the system Python — it lives in the uv
-  tool venv only. Use the venv's Python, or the bundled scripts.
 - Don't enable `humanize=True` for plain scraping of unprotected sites — it
   adds latency with no win.
 - Don't keep `serve.sh` running for a one-shot fetch. The CDP server is for
@@ -141,12 +127,13 @@ script examples above are enough — don't load the reference.
 
 ## Troubleshooting
 
-- `Binary not found` / first-run hang → `cloakbrowser install`.
-- `ModuleNotFoundError: cloakbrowser` → you're on the wrong Python. Use
-  `/usr/local/bin/cloakbrowser-python` or the bundled scripts (their shebang
-  already points there).
-- Slow startup → the binary checks for updates on launch. Pass
-  `auto_update=False` to `launch()` (or set `CLOAKBROWSER_AUTO_UPDATE=0`) to
-  skip.
+- `Binary not found` → the Chromium binary should be at `.chromium/` inside
+  this skill directory. If missing, re-import the full skill zip.
+- `ModuleNotFoundError: cloakbrowser` → `scripts/_runtime.py` failed to add
+  `.runtime/lib` to `sys.path`. Check that `.runtime/lib/` exists inside this
+  skill directory.
+- Slow startup / hang on launch → `CLOAKBROWSER_AUTO_UPDATE=0` is already set
+  by `_runtime.py`. If it still hangs, the binary may be corrupted; re-import
+  the skill zip.
 - Still blocked → see `references/stealth-knobs.md` for the escalation order
   (`humanize` → residential proxy + `geoip` → persistent profile).

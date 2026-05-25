@@ -1,4 +1,5 @@
-#!/usr/local/bin/cloakbrowser-python
+#!/usr/bin/env python3
+import _runtime  # noqa: F401 — bootstrap sys.path + env vars
 """Self-check: confirm the stealth Chromium fingerprint looks like real Chrome.
 
 Prints a small JSON report. Exit 0 if all four core stealth tells pass:

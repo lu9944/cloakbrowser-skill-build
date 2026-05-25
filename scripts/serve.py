@@ -1,4 +1,5 @@
-#!/usr/local/bin/cloakbrowser-python
+#!/usr/bin/env python3
+import _runtime  # noqa: F401 — bootstrap sys.path + env vars
 """Long-lived stealth Chromium exposing a CDP endpoint.
 
 Other tools connect with Playwright's `connect_over_cdp("http://127.0.0.1:PORT")`.
