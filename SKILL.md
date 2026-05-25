@@ -41,31 +41,31 @@ All scripts use `#!/usr/bin/env python3` and import `_runtime` to bootstrap the
 bundled packages and Chromium path. The skill directory path is shown at the top
 of this message (the directory containing this SKILL.md).
 
-**Always use the full absolute path when invoking scripts.** For example, if the
-skill directory is `/home/ubuntu/.qwenpaw/workspaces/default/skills/cloakbrowser`,
-then scripts are at `/home/ubuntu/.qwenpaw/workspaces/default/skills/cloakbrowser/scripts/`.
+**Always use `python3` to run scripts (not `./script.py`)** — zip extraction
+may lose execute permissions. For example, if the skill directory is
+`/home/ubuntu/.qwenpaw/workspaces/default/skills/cloakbrowser`, run:
 
 ```bash
 # Replace SKILL_DIR with the actual skill directory path shown above
-SKILL_DIR/scripts/fetch.py https://example.com                       # full HTML on stdout
-SKILL_DIR/scripts/fetch.py https://example.com --text                # visible text only
-SKILL_DIR/scripts/fetch.py https://example.com --selector "h1"       # scoped to a selector
-SKILL_DIR/scripts/fetch.py https://protected.example --humanize      # behavioural stealth
-SKILL_DIR/scripts/fetch.py https://geo.example --proxy socks5://u:p@host:1080 --geoip
+python3 SKILL_DIR/scripts/fetch.py https://example.com                       # full HTML on stdout
+python3 SKILL_DIR/scripts/fetch.py https://example.com --text                # visible text only
+python3 SKILL_DIR/scripts/fetch.py https://example.com --selector "h1"       # scoped to a selector
+python3 SKILL_DIR/scripts/fetch.py https://protected.example --humanize      # behavioural stealth
+python3 SKILL_DIR/scripts/fetch.py https://geo.example --proxy socks5://u:p@host:1080 --geoip
 
-SKILL_DIR/scripts/screenshot.py https://example.com /tmp/out.png --full
-SKILL_DIR/scripts/screenshot.py https://example.com /tmp/hero.png --selector ".hero"
-SKILL_DIR/scripts/screenshot.py https://example.com /tmp/m.png --viewport 390x844
+python3 SKILL_DIR/scripts/screenshot.py https://example.com /tmp/out.png --full
+python3 SKILL_DIR/scripts/screenshot.py https://example.com /tmp/hero.png --selector ".hero"
+python3 SKILL_DIR/scripts/screenshot.py https://example.com /tmp/m.png --viewport 390x844
 
-SKILL_DIR/scripts/pdf.py https://example.com /tmp/page.pdf --format A4
-SKILL_DIR/scripts/pdf.py https://example.com /tmp/wide.pdf --landscape
+python3 SKILL_DIR/scripts/pdf.py https://example.com /tmp/page.pdf --format A4
+python3 SKILL_DIR/scripts/pdf.py https://example.com /tmp/wide.pdf --landscape
 
-SKILL_DIR/scripts/eval-js.py https://news.example "Array.from(document.querySelectorAll('h2')).map(h=>h.innerText)"
-SKILL_DIR/scripts/eval-js.py https://example.com  "({ua: navigator.userAgent, w: innerWidth})"
+python3 SKILL_DIR/scripts/eval-js.py https://news.example "Array.from(document.querySelectorAll('h2')).map(h=>h.innerText)"
+python3 SKILL_DIR/scripts/eval-js.py https://example.com  "({ua: navigator.userAgent, w: innerWidth})"
 
-SKILL_DIR/scripts/check-stealth.py        # JSON report + exit 0 if all 4 stealth tells pass
+python3 SKILL_DIR/scripts/check-stealth.py        # JSON report + exit 0 if all 4 stealth tells pass
 
-SKILL_DIR/scripts/serve.sh --port 9222    # starts cloakserve in background; logs /tmp/cloakserve.log
+bash SKILL_DIR/scripts/serve.sh --port 9222       # starts cloakserve in background; logs /tmp/cloakserve.log
 ```
 
 The pattern is consistent: positional `URL` (and `OUTPUT` where relevant), then
