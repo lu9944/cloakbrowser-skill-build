@@ -16,7 +16,7 @@ breaks on the next Chrome upgrade.
 
 The Chromium binary and Python runtime are bundled inside this skill directory
 under `.chromium/` and `.runtime/`. Scripts automatically discover them via
-`scripts/_runtime.py`, which sets `CLOAKBROWSER_CACHE_DIR` and adds the bundled
+`scripts/_runtime.py`, which sets `CLOAKBROWSER_BINARY_PATH` and adds the bundled
 packages to `sys.path`. No `/usr/local/bin` wrapper or separate install step is
 required.
 
@@ -74,25 +74,25 @@ optional flags `--humanize`, `--proxy`, `--geoip`, `--wait`, `--timeout`.
 ## Inline Python — for everything the scripts don't cover
 
 For multi-step flows (login, fill a form, click through, conditional waits),
-write a one-off script. Use the same `_runtime` bootstrap:
+write a one-off Python script file in SKILL_DIR/scripts/ so it can import
+`_runtime` for the bootstrap:
 
 ```bash
-python3 -c "
-import sys, os
-sys.path.insert(0, 'SKILL_DIR/.runtime/lib')
-os.environ['CLOAKBROWSER_BINARY_PATH'] = 'SKILL_DIR/.chromium/chromium-VERSION/chrome'
-os.environ['CLOAKBROWSER_AUTO_UPDATE'] = '0'
+cat > SKILL_DIR/scripts/_temp_flow.py <<'PY'
+import _runtime  # noqa: F401
 from cloakbrowser import launch
 b = launch(headless=True, humanize=True)
 p = b.new_page()
-p.goto('https://example.com/login', wait_until='domcontentloaded')
-p.fill('#email', 'me@example.com')
-p.fill('#password', '…')
-p.click('button[type=submit]')
-p.wait_for_url('**/dashboard**')
+p.goto("https://example.com/login", wait_until="domcontentloaded")
+p.fill("#email", "me@example.com")
+p.fill("#password", "…")
+p.click("button[type=submit]")
+p.wait_for_url("**/dashboard**")
 print(p.title())
 b.close()
-"
+PY
+SKILL_DIR/scripts/_temp_flow.py
+rm SKILL_DIR/scripts/_temp_flow.py
 ```
 
 The API is identical to Playwright's sync API — anything in the Playwright
