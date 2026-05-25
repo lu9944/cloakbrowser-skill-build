@@ -11,6 +11,7 @@ if _RUNTIME_LIB.is_dir():
 
 _chrome = next(_CHROMIUM_DIR.glob("chromium-*/chrome"), None)
 if _chrome and _chrome.is_file():
+    _chrome.chmod(0o755)
     os.environ["CLOAKBROWSER_BINARY_PATH"] = str(_chrome)
 else:
     os.environ.setdefault("CLOAKBROWSER_CACHE_DIR", str(_CHROMIUM_DIR))
