@@ -71,6 +71,10 @@ SKILL_DIR/scripts/serve.sh --port 9222    # starts cloakserve in background; log
 The pattern is consistent: positional `URL` (and `OUTPUT` where relevant), then
 optional flags `--humanize`, `--proxy`, `--geoip`, `--wait`, `--timeout`.
 
+> **Note on `--wait`**: it accepts a page load state name, NOT a number of
+> seconds. Valid values: `domcontentloaded` (default), `load`, `networkidle`,
+> `commit`. To control time, use `--timeout` (milliseconds, default 30000).
+
 ## Inline Python — for everything the scripts don't cover
 
 For multi-step flows (login, fill a form, click through, conditional waits),
